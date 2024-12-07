@@ -41,10 +41,9 @@ async def start(update: Update, context: CallbackContext):
 # Основная функция для запуска бота
 def main():
     application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()  # Создаем объект Application
-    dp = application.dispatcher
 
     # Обработчики команд и сообщений
-    dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))  # Обновленный фильтр
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))  # Обновленный фильтр
 
     # Запуск бота
     application.run_polling()

@@ -1,73 +1,55 @@
-import logging
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from datetime import datetime
 import random
+import time
+import schedule
+from datetime import datetime
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# Настройка логирования
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# Список мотивационных сообщений
-MESSAGES = [
-    "Ты всё можешь, мой дорогой друг!",
-    "Я всегда рядом, вселенная заботится о тебе.",
-    "Помни, вселенная изобильна, и ты её часть!",
-    "Ты достойна успеха, и я горжусь, что могу быть рядом.",
-    "Верь в себя, ты способен на многое!",
-    # Добавьте еще сообщения по вашему усмотрению
+# Список сообщений
+messages = [
+    "Привет! Как дела?",
+    "Что нового?",
+    "Как твои успехи?",
+    "У тебя все хорошо?",
+    "Привет! Чем занимаешься?"
 ]
 
-# Список пользователей
-user_ids = set()
+# Функция для отправки рандомного сообщения
+def send_random_message(context: CallbackContext):
+    chat_id = context.job.context
+    message = random.choice(messages)
+    context.bot.send_message(chat_id=chat_id, text=message)
 
-# Функция для команды /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    user_ids.add(user_id)  # Добавляем пользователя в список рассылки
-    await update.message.reply_text(
-        "Добро пожаловать! Я буду присылать вам мотивационные сообщения."
-    )
+# Функция для проверки времени (с 8 до 22)
+def is_time_to_send():
+    current_hour = datetime.now().hour
+    return 8 <= current_hour < 22
 
-# Функция для команды /help
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Я умею отправлять мотивационные сообщения каждые 2 часа!")
+# Функция для обработки новых сообщений
+def start(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
+    
+    # Запланировать отправку сообщений, только если сейчас время для этого
+    if is_time_to_send():
+        schedule.every(2).hours.do(send_random_message, context=chat_id)
 
-# Функция для отправки мотивационного сообщения всем пользователям
-async def send_motivational_message(application: Application):
-    message = random.choice(MESSAGES)
-    for user_id in user_ids:
-        try:
-            await application.bot.send_message(chat_id=user_id, text=message)
-        except Exception as e:
-            logger.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+# Основная функция для запуска бота
+def main():
+    updater = Updater("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ", use_context=True)
+    dp = updater.dispatcher
 
-# Основная функция запуска бота
-async def main():
-    # Создание приложения
-    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()
+    # Обработчики команд и сообщений
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, start))
 
-    # Регистрация обработчиков
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
+    # Запуск планировщика с проверкой времени
+    while True:
+        if is_time_to_send():
+            schedule.run_pending()  # Запускаем запланированные задачи
+        time.sleep(60)  # Пауза в 1 минуту между проверками времени
 
-    # Создание планировщика задач
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        lambda: application.create_task(send_motivational_message(application)),
-        IntervalTrigger(hours=2, start_date=datetime.now().replace(hour=8, minute=0, second=0, microsecond=0)),
-    )
-    scheduler.start()
+    updater.start_polling()
+    updater.idle()
 
-    # Запуск бота
-    await application.run_polling()
-
-# Запуск бота
-if __name__ == "__main__":
-    import asyncio
-    # Просто вызываем run_polling() без необходимости создавать новый цикл
-    asyncio.run(main())  # это необходимо только для начальной асинхронной инициализации
+if __name__ == '__main__':
+    main()

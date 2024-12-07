@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext
 from telegram.ext import filters  # Новый способ импорта filters
 
 # Список сообщений
@@ -27,9 +27,9 @@ def is_time_to_send():
     return 8 <= current_hour < 22
 
 # Функция для обработки новых сообщений
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
-    update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
+    await update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
     
     # Запланировать отправку сообщений, только если сейчас время для этого
     if is_time_to_send():
@@ -40,14 +40,14 @@ def start(update: Update, context: CallbackContext):
 
 # Основная функция для запуска бота
 def main():
-    updater = Updater("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ", use_context=True)
-    dp = updater.dispatcher
+    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()  # Создаем объект Application
+    dp = application.dispatcher
 
     # Обработчики команд и сообщений
     dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))  # Обновленный фильтр
 
-    updater.start_polling()
-    updater.idle()
+    # Запуск бота
+    application.run_polling()
 
 if __name__ == '__main__':
     main()

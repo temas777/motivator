@@ -63,11 +63,11 @@ async def main():
     )
     scheduler.start()
 
-    # Запуск бота с уже работающим циклом событий
+    # Запуск бота
     await application.run_polling()
 
 # Запуск бота
 if __name__ == "__main__":
     import asyncio
-    # Здесь не вызываем asyncio.run(), так как уже есть активный цикл
-    asyncio.get_event_loop().run_until_complete(main())
+    # Просто вызываем run_polling() без необходимости создавать новый цикл
+    asyncio.run(main())

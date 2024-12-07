@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from datetime import datetime, time
+from datetime import datetime
 import random
 
 # Настройка логирования
@@ -63,12 +63,11 @@ async def main():
     )
     scheduler.start()
 
-    # Запуск бота
+    # Запуск бота с уже работающим циклом событий
     await application.run_polling()
 
-# Запуск бота без asyncio.run
+# Запуск бота
 if __name__ == "__main__":
     import asyncio
-    # Убираем asyncio.run и запускаем через основной цикл событий
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    # Здесь не вызываем asyncio.run(), так как уже есть активный цикл
+    asyncio.get_event_loop().run_until_complete(main())

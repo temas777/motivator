@@ -70,4 +70,4 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     # Просто вызываем run_polling() без необходимости создавать новый цикл
-    asyncio.run(main())
+    asyncio.run(main())  # это необходимо только для начальной асинхронной инициализации

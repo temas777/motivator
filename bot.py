@@ -1,9 +1,10 @@
 import random
 import time
-import schedule
 from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext
+from telegram.ext import filters  # Новый способ импорта filters
 
 # Список сообщений
 messages = [
@@ -32,7 +33,10 @@ def start(update: Update, context: CallbackContext):
     
     # Запланировать отправку сообщений, только если сейчас время для этого
     if is_time_to_send():
-        schedule.every(2).hours.do(send_random_message, context=chat_id)
+        # Создание и запуск планировщика
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(send_random_message, 'interval', hours=2, start_date='2024-12-08 08:00:00', context=chat_id)
+        scheduler.start()
 
 # Основная функция для запуска бота
 def main():
@@ -40,13 +44,7 @@ def main():
     dp = updater.dispatcher
 
     # Обработчики команд и сообщений
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, start))
-
-    # Запуск планировщика с проверкой времени
-    while True:
-        if is_time_to_send():
-            schedule.run_pending()  # Запускаем запланированные задачи
-        time.sleep(60)  # Пауза в 1 минуту между проверками времени
+    dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))  # Обновленный фильтр
 
     updater.start_polling()
     updater.idle()

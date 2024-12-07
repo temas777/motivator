@@ -1,11 +1,11 @@
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, ContextTypes
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 import random
 
-# Список мотивационных сообщений (50 новых сообщений)
+# Список мотивационных сообщений
 messages = [
     "Ты всё можешь, мой дорогой друг!",
     "Я всегда рядом, вселенная заботится о тебе.",
@@ -74,45 +74,46 @@ messages = [
 users = []
 
 # Функция для добавления пользователя в список
-def start(update: Update, context: CallbackContext):
-    user_id = update.message.chat_id
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_chat.id
     if user_id not in users:
         users.append(user_id)
-    update.message.reply_text("Привет! Я твой мотивационный бот. Ты готов к вдохновению!")
+    await update.message.reply_text("Привет! Я твой мотивационный бот. Ты готов к вдохновению!")
 
 # Функция для отправки сообщений всем пользователям
-def send_motivational_message(context: CallbackContext):
+async def send_motivational_message(application: Application):
     message = random.choice(messages)
     for user_id in users:
-        context.bot.send_message(chat_id=user_id, text=message)
+        try:
+            await application.bot.send_message(chat_id=user_id, text=message)
+        except Exception as e:
+            print(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
 
 # Настройка расписания для отправки сообщений
-def schedule_messages(updater: Updater):
+def schedule_messages(application: Application):
     scheduler = BackgroundScheduler()
 
     # Отправлять сообщения каждый день с 8:00 до 22:00 каждые 2 часа
     scheduler.add_job(
-        send_motivational_message,
-        IntervalTrigger(hours=2, start_date="08:00:00", end_date="22:00:00"),
-        args=[updater],
+        lambda: application.create_task(send_motivational_message(application)),
+        IntervalTrigger(hours=2, start_date="2024-12-08 08:00:00", end_date="2024-12-08 22:00:00"),
     )
 
     scheduler.start()
 
 # Основная функция
-def main():
-    updater = Updater("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ", use_context=True)
+async def main():
+    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()
 
     # Команды
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
 
     # Расписание сообщений
-    schedule_messages(updater)
+    schedule_messages(application)
 
     # Запуск бота
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+    asyncio.run(main())

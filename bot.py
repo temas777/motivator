@@ -45,7 +45,7 @@ async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         lambda: application.create_task(send_motivational_message(application)),
-        IntervalTrigger(hours=2, start_date="2024-12-08 08:00:00", end_date="2024-12-08 23:00:00")
+        IntervalTrigger(hours=2, start_date="2024-12-08 08:00:00", end_date="2024-12-08 22:00:00")
     )
     scheduler.start()
 

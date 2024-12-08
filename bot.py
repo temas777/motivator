@@ -1,12 +1,17 @@
 import random
-import time
-from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext
-from telegram.ext import filters  # Новый способ импорта filters
+from telegram.ext import Application, MessageHandler, CommandHandler, CallbackContext
+from telegram.ext import filters
+import logging
 
-# Список сообщений
+# Настройка логирования
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Список случайных сообщений
 messages = [
     "Привет! Как дела?",
     "Что нового?",
@@ -15,37 +20,34 @@ messages = [
     "Привет! Чем занимаешься?"
 ]
 
-# Функция для отправки рандомного сообщения
+# Функция для обработки текстовых сообщений
+async def start(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    await update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
+    logger.info(f"Бот начал общение с пользователем {chat_id}")
+
+# Функция для отправки случайного сообщения
 def send_random_message(context: CallbackContext):
     chat_id = context.job.context
     message = random.choice(messages)
     context.bot.send_message(chat_id=chat_id, text=message)
-
-# Функция для проверки времени (с 8 до 22)
-def is_time_to_send():
-    current_hour = datetime.now().hour
-    return 8 <= current_hour < 22
-
-# Функция для обработки новых сообщений
-async def start(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    await update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
-    
-    # Запланировать отправку сообщений, только если сейчас время для этого
-    if is_time_to_send():
-        # Создание и запуск планировщика
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(send_random_message, 'interval', hours=2, start_date='2024-12-08 08:00:00', context=chat_id)
-        scheduler.start()
+    logger.info(f"Отправлено сообщение: {message} в чат {chat_id}")
 
 # Основная функция для запуска бота
 def main():
-    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()  # Создаем объект Application
+    # Создание приложения
+    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()
 
-    # Обработчики команд и сообщений
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))  # Обновленный фильтр
+    # Регистрация обработчика текстовых сообщений
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))
+
+    # Планировщик задач
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(send_random_message, 'interval', hours=2, context="CHAT_ID")  # Укажите корректный CHAT_ID
+    scheduler.start()
 
     # Запуск бота
+    logger.info("Бот запущен и работает")
     application.run_polling()
 
 if __name__ == '__main__':

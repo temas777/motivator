@@ -3,69 +3,66 @@ import random
 from datetime import datetime, time
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram.ext import Application, CommandHandler
+from config import BOT_TOKEN  # Импорт токена из config.py
 
-# Настройка логирования
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# Логирование
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Укажите токен вашего бота
-BOT_TOKEN = "7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ"  # Замените на ваш токен
 
 # Список сообщений
 messages = [
-    "Ты легко достигаешь успеха!",
-    "Деньги любят тебя!",
-    "Ты легко привлекаешь деньги в свою жизнь!",
-    "У тебя всегда достаточно ресурсов для счастья!",
-    "Ты сохраняешь спокойствие в любой ситуации!",
-    "Ты находишь гармонию между работой и отдыхом!",
-    "Ты живёшь так, как всегда мечтал!",
+    "Ты можешь всё!",
+    "Сегодня твой день!",
+    "Двигайся вперёд, несмотря на всё!",
+    "Ты способен достичь любых целей!",
+    "Сделай шаг к своей мечте уже сегодня!",
+    "Никогда не сдавайся!",
+    "У тебя всё получится!",
 ]
 
-# Хранилище chat_id пользователей
+# Список пользователей
 user_chat_ids = set()
 
-# Обработчик команды /start
+# Команда /start
 async def start(update, context):
     chat_id = update.effective_chat.id
-    user_chat_ids.add(chat_id)  # Добавляем chat_id в список
-    await context.bot.send_message(chat_id=chat_id, text="Привет! Теперь я буду присылать тебе сообщения каждые 2 часа.")
+    if chat_id not in user_chat_ids:
+        user_chat_ids.add(chat_id)
+        logger.info(f"Добавлен новый пользователь: {chat_id}")
+    await update.message.reply_text(
+        "Привет! Теперь ты будешь получать мотивационные сообщения каждые 3 часа с 8 утра до 10 вечера."
+    )
 
-# Функция для отправки сообщения
-async def send_random_message(application: Application):
+# Функция для отправки сообщений
+async def send_random_message(application):
     current_time = datetime.now().time()
-    if time(8, 0) <= current_time <= time(22, 0):  # Проверяем временной диапазон
+    if time(8, 0) <= current_time <= time(22, 0):
         for chat_id in user_chat_ids:
-            message = random.choice(messages)
             try:
+                message = random.choice(messages)
                 await application.bot.send_message(chat_id=chat_id, text=message)
                 logger.info(f"Отправлено сообщение пользователю {chat_id}: {message}")
             except Exception as e:
-                logger.error(f"Ошибка при отправке сообщения пользователю {chat_id}: {e}")
+                logger.error(f"Ошибка отправки сообщения пользователю {chat_id}: {e}")
     else:
-        logger.info("Не время для отправки сообщений.")
+        logger.info("Бот спит. Не время для отправки сообщений.")
 
 # Основная функция
 def main():
-    # Создаём приложение Telegram Bot API
+    # Создание приложения Telegram
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Добавляем обработчики команд
+    # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
 
-    # Создаём планировщик
+    # Планировщик задач
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_random_message, "interval", hours=2, args=[application])
-
-    # Запускаем планировщик
+    scheduler.add_job(send_random_message, "interval", hours=3, args=[application])
     scheduler.start()
-    logger.info("Планировщик запущен.")
 
     # Запуск бота
+    logger.info("Бот запущен.")
     application.run_polling()
 
-# Запуск
 if __name__ == "__main__":
     main()

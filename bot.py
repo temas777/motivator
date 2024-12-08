@@ -1,9 +1,7 @@
-import random
-from apscheduler.schedulers.background import BackgroundScheduler
-from telegram import Update
-from telegram.ext import Application, MessageHandler, CommandHandler, CallbackContext
-from telegram.ext import filters
 import logging
+import random
+from datetime import datetime, time
+from telegram.ext import Application
 
 # Настройка логирования
 logging.basicConfig(
@@ -11,44 +9,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Список случайных сообщений
+# Укажите ваш chat_id
+YOUR_CHAT_ID = 595754409  # Замените на ваш chat_id
+
+# Укажите токен вашего бота
+BOT_TOKEN = "7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ"  # Замените на ваш токен
+
+# Список сообщений
 messages = [
     "Привет! Как дела?",
-    "Что нового?",
-    "Как твои успехи?",
-    "У тебя все хорошо?",
-    "Привет! Чем занимаешься?"
+    "Не забывай делать перерывы!",
+    "Ты молодец, так держать!",
+    "Как твое настроение?",
+    "Напоминаю, что всё будет хорошо!",
 ]
 
-# Функция для обработки текстовых сообщений
-async def start(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    await update.message.reply_text("Привет! Я буду отправлять тебе случайные сообщения.")
-    logger.info(f"Бот начал общение с пользователем {chat_id}")
+# Основная функция
+async def send_random_message_and_exit():
+    current_time = datetime.now().time()
+    if time(8, 0) <= current_time <= time(22, 0):  # Проверяем временной диапазон
+        message = random.choice(messages)
+        application = Application.builder().token(BOT_TOKEN).build()
+        await application.bot.send_message(chat_id=YOUR_CHAT_ID, text=message)
+        logger.info(f"Отправлено сообщение: {message}")
+    else:
+        logger.info("Не время для отправки сообщения.")
+    exit()  # Завершение работы скрипта
 
-# Функция для отправки случайного сообщения
-def send_random_message(context: CallbackContext):
-    chat_id = context.job.context
-    message = random.choice(messages)
-    context.bot.send_message(chat_id=chat_id, text=message)
-    logger.info(f"Отправлено сообщение: {message} в чат {chat_id}")
+# Запуск
+if __name__ == "__main__":
+    import asyncio
 
-# Основная функция для запуска бота
-def main():
-    # Создание приложения
-    application = Application.builder().token("7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ").build()
-
-    # Регистрация обработчика текстовых сообщений
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, start))
-
-    # Планировщик задач
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(send_random_message, 'interval', hours=2, context="CHAT_ID")  # Укажите корректный CHAT_ID
-    scheduler.start()
-
-    # Запуск бота
-    logger.info("Бот запущен и работает")
-    application.run_polling()
-
-if __name__ == '__main__':
-    main()
+    asyncio.run(send_random_message_and_exit())

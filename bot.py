@@ -57,7 +57,7 @@ def main():
 
     # Создаём планировщик
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_random_message, "interval", minutes=1, args=[application])
+    scheduler.add_job(send_random_message, "interval", hours=1, args=[application])
 
     # Запускаем планировщик
     scheduler.start()

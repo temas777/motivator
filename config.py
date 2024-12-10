@@ -1,2 +1,2 @@
 # config.py
-BOT_TOKEN = "7792709244:AAFkwlX6248F3XaIAiB1KnFMMfYyKuowuXQ"  # Замените на токен вашего бота
+BOT_TOKEN = "8076906217:AAGKSCyMro9WCnPTje0dtb5wfxHIZSGeTv0"  # Замените на токен вашего бота

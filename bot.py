@@ -118,14 +118,14 @@ def add_schedulers(application):
     scheduler.add_job(
         send_general_message,
         "interval",
-        hours=2,
+        minute=1,
         args=[application],
     )
     scheduler.start()
     logger.info("Планировщик запущен.")
 
-# Основной запуск бота
-if __name__ == "__main__":
+# Функция автозапуска
+async def start_bot():
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.REPLY, handle_response))
@@ -134,4 +134,12 @@ if __name__ == "__main__":
     add_schedulers(application)
 
     logger.info("Бот запущен.")
-    application.run_polling()
+    await application.initialize()  # Инициализация бота
+    await application.start()       # Старт бота
+    await application.updater.start_polling()  # Старт polling
+
+# Основной запуск бота
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(start_bot())

@@ -23,7 +23,7 @@ with open("bot_token.txt", "r") as token_file:
     BOT_TOKEN = token_file.read().strip()
 
 # Групповой chat_id
-GROUP_CHAT_ID = -1001234567890  # Замените на ваш chat_id группы
+GROUP_CHAT_ID = -4651813337  # Замените на ваш chat_id группы
 
 # Данные
 DATA_PATH = "./data"

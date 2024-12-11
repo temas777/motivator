@@ -118,7 +118,7 @@ def add_schedulers(application):
     scheduler.add_job(
         send_general_message,
         "interval",
-        hours=3,
+        minutes=1,
         args=[application],
     )
     scheduler.start()

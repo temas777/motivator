@@ -126,14 +126,14 @@ def add_schedulers(application):
     scheduler.add_job(
         send_evening_message,
         "cron",
-        "interval",
-        minute=1,
+        hour=21,
+        minute=0,
         args=[application],
     )
     scheduler.add_job(
         send_general_message,
         "interval",
-        minute=1,
+        hours=2,
         args=[application],
     )
     scheduler.start()

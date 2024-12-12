@@ -23,7 +23,7 @@ with open("bot_token.txt", "r") as token_file:
     BOT_TOKEN = token_file.read().strip()
 
 # Групповой chat_id
-GROUP_CHAT_ID = -4651813337  # Замените на ваш chat_id группы
+GROUP_CHAT_ID = -1001234567890  # Замените на ваш chat_id группы
 
 # Данные
 DATA_PATH = "./data"
@@ -124,8 +124,8 @@ def add_schedulers(application):
     scheduler.start()
     logger.info("Планировщик запущен.")
 
-# Функция автозапуска
-async def start_bot():
+# Основной запуск бота
+if __name__ == "__main__":
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.REPLY, handle_response))
@@ -134,12 +134,4 @@ async def start_bot():
     add_schedulers(application)
 
     logger.info("Бот запущен.")
-    await application.initialize()  # Инициализация бота
-    await application.start()       # Старт бота
-    await application.updater.start_polling()  # Старт polling
-
-# Основной запуск бота
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(start_bot())
+    application.run_polling()

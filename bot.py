@@ -1,6 +1,6 @@
 import logging
 import random
-from telegram import Update, InputMediaPhoto, InputMediaVideo
+from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -9,7 +9,6 @@ from telegram.ext import (
     CallbackContext,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import time, datetime
 import os
 
 # Настройка логирования
@@ -22,15 +21,11 @@ logger = logging.getLogger(__name__)
 with open("bot_token.txt", "r") as token_file:
     BOT_TOKEN = token_file.read().strip()
 
-# Групповой chat_id
-GROUP_CHAT_ID = -4651813337  # Замените на ваш chat_id группы
-
 # Данные
 DATA_PATH = "./data"
 GENERAL_MESSAGES_FILE = os.path.join(DATA_PATH, "messages.txt")
 MORNING_MESSAGES_FILE = os.path.join(DATA_PATH, "morning_messages.txt")
 EVENING_MESSAGES_FILE = os.path.join(DATA_PATH, "evening_messages.txt")
-MEDIA_PATH = os.path.join(DATA_PATH, "media")
 
 # Создание приложения
 application = Application.builder().token(BOT_TOKEN).build()
@@ -38,83 +33,52 @@ application = Application.builder().token(BOT_TOKEN).build()
 # Список пользователей
 users = set()
 
-# Функция для загрузки текстовых сообщений
+
 def load_messages(file_path):
+    """Функция загрузки сообщений из файла."""
     if os.path.exists(file_path):
         with open(file_path, "r", encoding="utf-8") as file:
             return [line.strip() for line in file.readlines() if line.strip()]
     return []
 
-# Утреннее сообщение
+
 async def send_morning_message(context: CallbackContext):
+    """Отправка утреннего сообщения."""
     messages = load_messages(MORNING_MESSAGES_FILE)
-    logger.info(f"Загруженные утренние сообщения: {messages}")  # Лог загруженных сообщений
     if messages:
-        try:
-            message = random.choice(messages)
-            for user_id in users:
+        message = random.choice(messages)
+        for user_id in users:
+            try:
                 await context.bot.send_message(chat_id=user_id, text=message)
-            logger.info("Утреннее сообщение отправлено.")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке утреннего сообщения: {e}")
-    else:
-        logger.warning("Нет утренних сообщений для отправки.")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке утреннего сообщения пользователю {user_id}: {e}")
 
-# Вечернее сообщение
+
 async def send_evening_message(context: CallbackContext):
+    """Отправка вечернего сообщения."""
     messages = load_messages(EVENING_MESSAGES_FILE)
-    logger.info(f"Загруженные вечерние сообщения: {messages}")  # Лог загруженных сообщений
     if messages:
-        try:
-            message = random.choice(messages)
-            for user_id in users:
+        message = random.choice(messages)
+        for user_id in users:
+            try:
                 await context.bot.send_message(chat_id=user_id, text=message)
-            logger.info("Вечернее сообщение отправлено.")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке вечернего сообщения: {e}")
-    else:
-        logger.warning("Нет вечерних сообщений для отправки.")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке вечернего сообщения пользователю {user_id}: {e}")
 
-# Перенаправление ответов в группу
-async def handle_response(update: Update, context: CallbackContext):
-    if update.message.reply_to_message:  # Проверяем, что это ответ
-        reply_text = update.message.text
-        try:
-            await context.bot.send_message(
-                chat_id=GROUP_CHAT_ID,
-                text=f"Ответ от {update.effective_user.first_name}: {reply_text}",
-            )
-            logger.info("Ответ перенаправлен в группу.")
-        except Exception as e:
-            logger.error(f"Ошибка при перенаправлении ответа в группу: {e}")
 
-# Отправка общего сообщения
-async def send_general_message(context: CallbackContext):
-    messages = load_messages(GENERAL_MESSAGES_FILE)
-    logger.info(f"Загруженные общие сообщения: {messages}")  # Лог загруженных сообщений
-    if messages:
-        try:
-            message = random.choice(messages)
-            for user_id in users:
-                await context.bot.send_message(chat_id=user_id, text=message)
-            logger.info("Общее сообщение отправлено.")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке общего сообщения: {e}")
-    else:
-        logger.warning("Нет сообщений для отправки.")
-
-# Команда /start
 async def start(update: Update, context: CallbackContext):
+    """Обработчик команды /start."""
     user_id = update.effective_user.id
     if user_id not in users:
         users.add(user_id)
-        await update.message.reply_text("Вы успешно подписаны на мотивационные сообщения!")
-        logger.info(f"Новый пользователь добавлен: {user_id}")
+        await update.message.reply_text("Вы подписаны на уведомления!")
+        logger.info(f"Новый пользователь: {user_id}")
     else:
-        await update.message.reply_text("Вы уже подписаны!")
+        await update.message.reply_text("Вы уже подписаны.")
 
-# Добавление планировщика
+
 def add_schedulers(application):
+    """Добавление задач в планировщик."""
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         send_morning_message,
@@ -127,26 +91,32 @@ def add_schedulers(application):
         send_evening_message,
         "cron",
         hour=21,
-        minute=25,
-        args=[application],
-    )
-    scheduler.add_job(
-        send_general_message,
-        "interval",
-        hours=2,
+        minute=0,
         args=[application],
     )
     scheduler.start()
     logger.info("Планировщик запущен.")
 
-# Основной запуск бота
+
+async def delete_existing_webhook():
+    """Удаление существующего вебхука перед запуском polling."""
+    try:
+        await application.bot.delete_webhook()
+        logger.info("Вебхук успешно удалён.")
+    except Exception as e:
+        logger.error(f"Ошибка при удалении вебхука: {e}")
+
+
 if __name__ == "__main__":
+    # Удаляем вебхук перед запуском polling
+    application.post_init = delete_existing_webhook
+
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.REPLY, handle_response))
 
-    # Добавление планировщика
+    # Добавление задач планировщика
     add_schedulers(application)
 
+    # Запуск бота
     logger.info("Бот запущен.")
     application.run_polling()

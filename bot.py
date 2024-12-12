@@ -48,22 +48,30 @@ def load_messages(file_path):
 # Утреннее сообщение
 async def send_morning_message(context: CallbackContext):
     messages = load_messages(MORNING_MESSAGES_FILE)
+    logger.info(f"Загруженные утренние сообщения: {messages}")  # Лог загруженных сообщений
     if messages:
-        message = random.choice(messages)
-        for user_id in users:
-            await context.bot.send_message(chat_id=user_id, text=message)
-        logger.info("Утреннее сообщение отправлено.")
+        try:
+            message = random.choice(messages)
+            for user_id in users:
+                await context.bot.send_message(chat_id=user_id, text=message)
+            logger.info("Утреннее сообщение отправлено.")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке утреннего сообщения: {e}")
     else:
         logger.warning("Нет утренних сообщений для отправки.")
 
 # Вечернее сообщение
 async def send_evening_message(context: CallbackContext):
     messages = load_messages(EVENING_MESSAGES_FILE)
+    logger.info(f"Загруженные вечерние сообщения: {messages}")  # Лог загруженных сообщений
     if messages:
-        message = random.choice(messages)
-        for user_id in users:
-            await context.bot.send_message(chat_id=user_id, text=message)
-        logger.info("Вечернее сообщение отправлено.")
+        try:
+            message = random.choice(messages)
+            for user_id in users:
+                await context.bot.send_message(chat_id=user_id, text=message)
+            logger.info("Вечернее сообщение отправлено.")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке вечернего сообщения: {e}")
     else:
         logger.warning("Нет вечерних сообщений для отправки.")
 
@@ -71,20 +79,27 @@ async def send_evening_message(context: CallbackContext):
 async def handle_response(update: Update, context: CallbackContext):
     if update.message.reply_to_message:  # Проверяем, что это ответ
         reply_text = update.message.text
-        await context.bot.send_message(
-            chat_id=GROUP_CHAT_ID,
-            text=f"Ответ от {update.effective_user.first_name}: {reply_text}",
-        )
-        logger.info("Ответ перенаправлен в группу.")
+        try:
+            await context.bot.send_message(
+                chat_id=GROUP_CHAT_ID,
+                text=f"Ответ от {update.effective_user.first_name}: {reply_text}",
+            )
+            logger.info("Ответ перенаправлен в группу.")
+        except Exception as e:
+            logger.error(f"Ошибка при перенаправлении ответа в группу: {e}")
 
 # Отправка общего сообщения
 async def send_general_message(context: CallbackContext):
     messages = load_messages(GENERAL_MESSAGES_FILE)
+    logger.info(f"Загруженные общие сообщения: {messages}")  # Лог загруженных сообщений
     if messages:
-        message = random.choice(messages)
-        for user_id in users:
-            await context.bot.send_message(chat_id=user_id, text=message)
-        logger.info("Общее сообщение отправлено.")
+        try:
+            message = random.choice(messages)
+            for user_id in users:
+                await context.bot.send_message(chat_id=user_id, text=message)
+            logger.info("Общее сообщение отправлено.")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке общего сообщения: {e}")
     else:
         logger.warning("Нет сообщений для отправки.")
 
@@ -112,7 +127,7 @@ def add_schedulers(application):
         send_evening_message,
         "cron",
         hour=21,
-        minute=10,
+        minute=25,
         args=[application],
     )
     scheduler.add_job(

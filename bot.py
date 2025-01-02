@@ -148,8 +148,8 @@ def add_schedulers(application):
     scheduler.add_job(
         send_evening_message,
         "cron",
-        hour=19,
-        minute=0,
+        hour=15,
+        minute=27,
         args=[application],
     )
     scheduler.add_job(

@@ -156,11 +156,27 @@ if __name__ == "__main__":
     application.run_polling()
 
 
-# проверка копицй
 
-from os import getpid
+# Тестирование утреннего сообщения
+async def test_morning_message(update: Update, context: CallbackContext):
+    messages = load_messages(MORNING_MESSAGES_FILE)
+    if messages:
+        message = random.choice(messages)
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
+        logger.info("Тестовое утреннее сообщение отправлено в группу.")
+        await update.message.reply_text("Тестовое утреннее сообщение отправлено.")
+    else:
+        await update.message.reply_text("Нет утренних сообщений для теста.")
+        logger.warning("Нет утренних сообщений для теста.")
 
-@app.on_message(filters.command("check_pid"))
-async def check_pid(client, message):
-    pid = getpid()
-    await message.reply(f"My PID is: {pid}")
+# Тестирование вечернего сообщения
+async def test_evening_message(update: Update, context: CallbackContext):
+    messages = load_messages(EVENING_MESSAGES_FILE)
+    if messages:
+        message = random.choice(messages)
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
+        logger.info("Тестовое вечернее сообщение отправлено в группу.")
+        await update.message.reply_text("Тестовое вечернее сообщение отправлено.")
+    else:
+        await update.message.reply_text("Нет вечерних сообщений для теста.")
+        logger.warning("Нет вечерних сообщений для теста.")

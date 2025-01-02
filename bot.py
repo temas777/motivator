@@ -57,9 +57,9 @@ async def send_morning_message(context: CallbackContext):
     messages = load_messages(MORNING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        for user_id in users:
-            await send_message_with_check(context, message, user_id)
-        logger.info("Утреннее сообщение отправлено.")
+        # Отправка сообщения в группу
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
+        logger.info("Утреннее сообщение отправлено в группу.")
     else:
         logger.warning("Нет утренних сообщений для отправки.")
 
@@ -68,9 +68,9 @@ async def send_evening_message(context: CallbackContext):
     messages = load_messages(EVENING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        for user_id in users:
-            await send_message_with_check(context, message, user_id)
-        logger.info("Вечернее сообщение отправлено.")
+        # Отправка сообщения в группу
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
+        logger.info("Вечернее сообщение отправлено в группу.")
     else:
         logger.warning("Нет вечерних сообщений для отправки.")
 

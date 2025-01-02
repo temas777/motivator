@@ -1,7 +1,7 @@
 import logging
 import random
 import os
-from datetime import time, datetime
+from datetime import time
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -57,7 +57,6 @@ async def send_morning_message(context: CallbackContext):
     messages = load_messages(MORNING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        # Отправка сообщения в группу
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
         logger.info("Утреннее сообщение отправлено в группу.")
     else:
@@ -68,7 +67,6 @@ async def send_evening_message(context: CallbackContext):
     messages = load_messages(EVENING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        # Отправка сообщения в группу
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
         logger.info("Вечернее сообщение отправлено в группу.")
     else:
@@ -76,7 +74,7 @@ async def send_evening_message(context: CallbackContext):
 
 # Перенаправление ответов в группу
 async def handle_response(update: Update, context: CallbackContext):
-    if update.message.reply_to_message:  # Проверяем, что это ответ
+    if update.message.reply_to_message:
         reply_text = update.message.text
         await context.bot.send_message(
             chat_id=GROUP_CHAT_ID,
@@ -104,6 +102,30 @@ async def start(update: Update, context: CallbackContext):
         logger.info(f"Новый пользователь добавлен: {user_id}")
     else:
         await update.message.reply_text("Вы уже подписаны!")
+
+# Тестирование утреннего сообщения
+async def test_morning_message(update: Update, context: CallbackContext):
+    messages = load_messages(MORNING_MESSAGES_FILE)
+    if messages:
+        message = random.choice(messages)
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
+        logger.info("Тестовое утреннее сообщение отправлено в группу.")
+        await update.message.reply_text("Тестовое утреннее сообщение отправлено.")
+    else:
+        await update.message.reply_text("Нет утренних сообщений для теста.")
+        logger.warning("Нет утренних сообщений для теста.")
+
+# Тестирование вечернего сообщения
+async def test_evening_message(update: Update, context: CallbackContext):
+    messages = load_messages(EVENING_MESSAGES_FILE)
+    if messages:
+        message = random.choice(messages)
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
+        logger.info("Тестовое вечернее сообщение отправлено в группу.")
+        await update.message.reply_text("Тестовое вечернее сообщение отправлено.")
+    else:
+        await update.message.reply_text("Нет вечерних сообщений для теста.")
+        logger.warning("Нет вечерних сообщений для теста.")
 
 # Функция для удаления вебхуков
 async def delete_existing_webhook(application):
@@ -146,6 +168,8 @@ if __name__ == "__main__":
 
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("test_morning", test_morning_message))
+    application.add_handler(CommandHandler("test_evening", test_evening_message))
     application.add_handler(MessageHandler(filters.REPLY, handle_response))
 
     # Добавление задач планировщика
@@ -154,34 +178,3 @@ if __name__ == "__main__":
     # Запуск бота
     logger.info("Бот запущен.")
     application.run_polling()
-
-
-
-# Тестирование утреннего сообщения
-async def test_morning_message(update: Update, context: CallbackContext):
-    messages = load_messages(MORNING_MESSAGES_FILE)
-    if messages:
-        message = random.choice(messages)
-        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
-        logger.info("Тестовое утреннее сообщение отправлено в группу.")
-        await update.message.reply_text("Тестовое утреннее сообщение отправлено.")
-    else:
-        await update.message.reply_text("Нет утренних сообщений для теста.")
-        logger.warning("Нет утренних сообщений для теста.")
-
-# Тестирование вечернего сообщения
-async def test_evening_message(update: Update, context: CallbackContext):
-    messages = load_messages(EVENING_MESSAGES_FILE)
-    if messages:
-        message = random.choice(messages)
-        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"[ТЕСТ] {message}")
-        logger.info("Тестовое вечернее сообщение отправлено в группу.")
-        await update.message.reply_text("Тестовое вечернее сообщение отправлено.")
-    else:
-        await update.message.reply_text("Нет вечерних сообщений для теста.")
-        logger.warning("Нет вечерних сообщений для теста.")
-
-
-# Добавление обработчиков команд тестирования
-application.add_handler(CommandHandler("test_morning", test_morning_message))
-application.add_handler(CommandHandler("test_evening", test_evening_message))

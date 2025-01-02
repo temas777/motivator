@@ -1,8 +1,7 @@
 import logging
 import random
 import os
-import fcntl  # Для файловой блокировки
-from datetime import time, datetime
+from datetime import time
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -38,18 +37,6 @@ users = set()
 # Создание приложения
 application = Application.builder().token(BOT_TOKEN).build()
 
-# Проверка блокировки
-LOCK_FILE = "/tmp/telegram_bot.lock"  # Уникальный путь для файла блокировки
-
-def ensure_single_instance():
-    global lock_file
-    try:
-        lock_file = open(LOCK_FILE, "w")
-        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        logger.error("Другой экземпляр бота уже запущен. Завершение текущего.")
-        exit(1)
-
 # Функция для загрузки текстовых сообщений
 def load_messages(file_path):
     if os.path.exists(file_path):
@@ -70,7 +57,6 @@ async def send_morning_message(context: CallbackContext):
     messages = load_messages(MORNING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        # Отправка сообщения в группу
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
         logger.info("Утреннее сообщение отправлено в группу.")
     else:
@@ -81,7 +67,6 @@ async def send_evening_message(context: CallbackContext):
     messages = load_messages(EVENING_MESSAGES_FILE)
     if messages:
         message = random.choice(messages)
-        # Отправка сообщения в группу
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=message)
         logger.info("Вечернее сообщение отправлено в группу.")
     else:
@@ -89,7 +74,7 @@ async def send_evening_message(context: CallbackContext):
 
 # Перенаправление ответов в группу
 async def handle_response(update: Update, context: CallbackContext):
-    if update.message.reply_to_message:  # Проверяем, что это ответ
+    if update.message.reply_to_message:
         reply_text = update.message.text
         await context.bot.send_message(
             chat_id=GROUP_CHAT_ID,
@@ -142,6 +127,14 @@ async def test_evening_message(update: Update, context: CallbackContext):
         await update.message.reply_text("Нет вечерних сообщений для теста.")
         logger.warning("Нет вечерних сообщений для теста.")
 
+# Функция для удаления вебхуков
+async def delete_existing_webhook(application):
+    try:
+        await application.bot.delete_webhook()
+        logger.info("Вебхук успешно удалён.")
+    except Exception as e:
+        logger.error(f"Ошибка при удалении вебхука: {e}")
+
 # Добавление задач в планировщик
 def add_schedulers(application):
     scheduler = AsyncIOScheduler()
@@ -170,9 +163,6 @@ def add_schedulers(application):
 
 # Основной запуск бота
 if __name__ == "__main__":
-    # Убедимся, что запущен только один экземпляр
-    ensure_single_instance()
-
     # Удаление вебхука перед запуском polling
     application.post_init = lambda app: delete_existing_webhook(app)
 

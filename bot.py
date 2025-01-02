@@ -154,3 +154,13 @@ if __name__ == "__main__":
     # Запуск бота
     logger.info("Бот запущен.")
     application.run_polling()
+
+
+# проверка копицй
+
+from os import getpid
+
+@app.on_message(filters.command("check_pid"))
+async def check_pid(client, message):
+    pid = getpid()
+    await message.reply(f"My PID is: {pid}")

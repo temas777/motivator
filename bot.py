@@ -180,3 +180,8 @@ async def test_evening_message(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("Нет вечерних сообщений для теста.")
         logger.warning("Нет вечерних сообщений для теста.")
+
+
+# Добавление обработчиков команд тестирования
+application.add_handler(CommandHandler("test_morning", test_morning_message))
+application.add_handler(CommandHandler("test_evening", test_evening_message))
